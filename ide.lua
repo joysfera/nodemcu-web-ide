@@ -121,7 +121,14 @@ srv:listen(80, function(conn)
 
     if vars == "run" then
         sen = sen .. "<verbatim>"
+
+        function s_output(str) sen = sen .. str end
+        node.output(s_output, 0) -- re-direct output to function s_output.
+
         local st, result = pcall(dofile, url)
+
+        node.output(nil)
+
         if result then sen = sen .. "<br>Result of the run: " .. tostring(result) end
         sen = sen .. "</verbatim>"
     end
