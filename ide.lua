@@ -116,10 +116,9 @@ srv:listen(80, function(conn)
         sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};\n"
                   .. "var x=new XMLHttpRequest()\nx.onreadystatechange=function(){if(x.readyState==4) document.getElementsByName('t')[0].value = x.responseText; };\nx.open('GET',location.pathname,true)\nx.send()</script>"
                   .. "<a href='/'>Back to file list</a><br><br><textarea name=t cols=79 rows=17></textarea></br>"
-                  .. "<button onclick=\"tag('Saving');x.open('POST',location.pathname,true);\nx.onreadystatechange=function(){if(x.readyState==4) tag(x.responseText);};\nx.send(new Blob([document.getElementsByName('t')[0].value],{type:'text/plain'}));\">Save</button><a href='?run'>run</a><w></w>"
-    end    
+                  .. "<button onclick=\"tag('Saving');x.open('POST',location.pathname,true);\nx.onreadystatechange=function(){if(x.readyState==4) tag(x.responseText);};\nx.send(new Blob([document.getElementsByName('t')[0].value],{type:'text/plain'}));\">Save</button> <a href='?run'>run</a><w></w>"
 
-    if vars == "run" then
+    elseif vars == "run" then
         sen = sen .. "<verbatim>"
 
         function s_output(str) sen = sen .. str end
@@ -131,12 +130,16 @@ srv:listen(80, function(conn)
 
         if result then sen = sen .. "<br>Result of the run: " .. tostring(result) end
         sen = sen .. "</verbatim>"
+
+    elseif vars == "delete" then
+        file.remove(url)
+        url = ""
     end
 
     if url == "" then
         local l = file.list();
         for k,v in pairs(l) do  
-            sen = sen .. "<a href='" ..k.. "?edit'>" ..k.. "</a>, size: " ..v.. "<br>"
+            sen = sen .. "<a href='" ..k.. "?edit'>" ..k.. "</a>, size: " ..v.. " <a href='" ..k.. "?delete'>delete</a><br>"
         end
     end
 
