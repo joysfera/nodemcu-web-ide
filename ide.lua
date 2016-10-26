@@ -25,7 +25,7 @@ srv:listen(80, function(conn)
 
   conn:on("receive", function(sck, payload)
     
-    if Status==0 then
+    if Status == 0 then
         _, _, method, url, vars = string.find(payload, "([A-Z]+) /([^?]*)%??(.*) HTTP")
         -- print("Method, URL, vars: ", method, url, vars)
     end
@@ -141,6 +141,7 @@ srv:listen(80, function(conn)
         for k,v in pairs(l) do  
             sen = sen .. "<a href='" ..k.. "?edit'>" ..k.. "</a>, size: " ..v.. " <a href='" ..k.. "?delete'>delete</a><br>"
         end
+        sen = sen .. "<a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a>"
     end
 
     sck:send(sen .. "</body></html>")
