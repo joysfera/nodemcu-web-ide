@@ -1,9 +1,9 @@
 --[[
-XChip's NodeMCU IDE - Feb 8, 2015
-Source: http://www.esp8266.com/viewtopic.php?f=19&t=1549
+XChip's NodeMCU IDE
+Original Source: http://www.esp8266.com/viewtopic.php?f=19&t=1549
 
-Updated for new async socket:send, fixed, cleaned up
-and improved by Petr Stehlik in October 2016
+Updated for new async socket send(), fixed, cleaned up
+and improved by Petr Stehlik
 
 Create, Edit and run NodeMCU files using your webbrowser.
 Examples:
@@ -110,13 +110,13 @@ srv:listen(80, function(conn)
         return
     end
 
-    sen = sen .. "<html><body><h1>NodeMCU IDE</h1>"
+    sen = sen .. "<html><body><h1><a href='/'>NodeMCU IDE</a></h1>"
     
     if vars == "edit" then
         sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};\n"
-                  .. "var x=new XMLHttpRequest()\nx.onreadystatechange=function(){if(x.readyState==4) document.getElementsByName('t')[0].value = x.responseText; };\nx.open('GET',location.pathname,true)\nx.send()</script>"
-                  .. "<a href='/'>Back to file list</a><br><br><textarea name=t cols=79 rows=17></textarea></br>"
-                  .. "<button onclick=\"tag('Saving');x.open('POST',location.pathname,true);\nx.onreadystatechange=function(){if(x.readyState==4) tag(x.responseText);};\nx.send(new Blob([document.getElementsByName('t')[0].value],{type:'text/plain'}));\">Save</button> <a href='?run'>run</a><w></w>"
+                  .. "var x=new XMLHttpRequest()\nx.onreadystatechange=function(){if(x.readyState==4) document.getElementsByName('t')[0].value = x.responseText; };\nx.open('GET',location.pathname)\nx.send()</script>"
+                  .. "<textarea name=t cols=79 rows=17></textarea></br>"
+                  .. "<button onclick=\"tag('Saving');x.open('POST',location.pathname);\nx.onreadystatechange=function(){if(x.readyState==4) tag(x.responseText);};\nx.send(new Blob([document.getElementsByName('t')[0].value],{type:'text/plain'}));\">Save</button> <a href='?run'>run</a> <w></w>"
 
     elseif vars == "run" then
         sen = sen .. "<verbatim>"
@@ -134,6 +134,10 @@ srv:listen(80, function(conn)
     elseif vars == "delete" then
         file.remove(url)
         url = ""
+
+    elseif vars == "restart" then
+        node.restart()
+
     end
 
     if url == "" then
@@ -141,7 +145,7 @@ srv:listen(80, function(conn)
         for k,v in pairs(l) do  
             sen = sen .. "<a href='" ..k.. "?edit'>" ..k.. "</a>, size: " ..v.. " <a href='" ..k.. "?delete'>delete</a><br>"
         end
-        sen = sen .. "<a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a>"
+        sen = sen .. "<a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);document.write(\"Please wait\");return false'>Restart</a>"
     end
 
     sck:send(sen .. "</body></html>")
