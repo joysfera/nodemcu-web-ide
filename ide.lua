@@ -15,7 +15,7 @@ http://<mcu_ip>/newfile.lua?edit  allows to creates or edits the specified scrip
 http://<mcu_ip>/newfile.lua?run   it will run the specified script and will show the returned value
 --]]
 
-local aceEditor = true -- feel free to enable or disable the shiny ACE editor
+local AceEnabled = true -- feel free to enable or disable the shiny Ajax.org Cloud Editor
 
 srv = net.createServer(net.TCP)
 srv:listen(80, function(conn)
@@ -117,7 +117,7 @@ srv:listen(80, function(conn)
     sen = sen .. "<html><body><h1><a href='/'>NodeMCU IDE</a></h1>"
     
     if vars == "edit" then
-        if aceEditor then
+        if AceEnabled then
             sen = sen .. "<style type='text/css'>#editor{width: 100%; height: 80%}</style><div id='editor'></div><script src='//rawgit.com/ajaxorg/ace-builds/master/src-min-noconflict/ace.js'></script>"
                 .. "<script>var e=ace.edit('editor');e.setTheme('ace/theme/monokai');e.getSession().setMode('ace/mode/lua');function getSource(){return e.getValue();};function setSource(s){e.setValue(s);}</script>"
         else
@@ -135,10 +135,15 @@ srv:listen(80, function(conn)
 
         local st, result = pcall(dofile, url)
 
-        node.output(nil)
+        -- delay the output capture by 1000 milliseconds to give some time to the user routine in pcall()
+        tmr.alarm(0, 1000, tmr.ALARM_SINGLE, function() 
+            node.output(nil)
+            if result then sen = sen .. "<br>Result of the run: " .. tostring(result) .. "<br>" end
+            sen = sen .. "</verbatim></body></html>"
+            sck:send(sen)
+        end)
 
-        if result then sen = sen .. "<br>Result of the run: " .. tostring(result) end
-        sen = sen .. "</verbatim>"
+        return
 
     elseif vars == "delete" then
         file.remove(url)
