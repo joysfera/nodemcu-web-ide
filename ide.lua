@@ -106,7 +106,7 @@ srv:listen(80, function(conn)
     -- it wants a file in particular
     if url ~= "" and vars == "" then
         DataToGet = 0
-	sck:send(sen)
+        sck:send(sen)
         return
     end
 
@@ -155,7 +155,7 @@ srv:listen(80, function(conn)
     if DataToGet >= 0 and method == "GET" then
         if file.open(url, "r") then
             file.seek("set", DataToGet)
-	    local chunkSize = 512
+        local chunkSize = 512
             local line = file.read(chunkSize)
             file.close()
             if line then
