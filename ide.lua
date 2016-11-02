@@ -2,8 +2,10 @@
 XChip's NodeMCU IDE
 Original Source: http://www.esp8266.com/viewtopic.php?f=19&t=1549
 
-Updated for new async socket send(), fixed, cleaned up
-and improved by Petr Stehlik
+Petr Stehlik found the source in October 2016, gave it a new home
+at https://github.com/joysfera/nodemcu-web-ide under the GPL license.
+Then updated it for new async socket send(), fixed, cleaned up,
+added syntax highlighting and further improvements.
 
 Create, Edit and run NodeMCU files using your webbrowser.
 Examples:
@@ -12,6 +14,8 @@ http://<mcu_ip>/newfile.lua    displays the file on your browser
 http://<mcu_ip>/newfile.lua?edit  allows to creates or edits the specified script in your browser
 http://<mcu_ip>/newfile.lua?run   it will run the specified script and will show the returned value
 --]]
+
+local aceEditor = true -- feel free to enable or disable the shiny ACE editor
 
 srv = net.createServer(net.TCP)
 srv:listen(80, function(conn)
@@ -113,10 +117,15 @@ srv:listen(80, function(conn)
     sen = sen .. "<html><body><h1><a href='/'>NodeMCU IDE</a></h1>"
     
     if vars == "edit" then
-        sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};\n"
-                  .. "var x=new XMLHttpRequest()\nx.onreadystatechange=function(){if(x.readyState==4) document.getElementsByName('t')[0].value = x.responseText; };\nx.open('GET',location.pathname)\nx.send()</script>"
-                  .. "<textarea name=t cols=79 rows=17></textarea></br>"
-                  .. "<button onclick=\"tag('Saving');x.open('POST',location.pathname);\nx.onreadystatechange=function(){if(x.readyState==4) tag(x.responseText);};\nx.send(new Blob([document.getElementsByName('t')[0].value],{type:'text/plain'}));\">Save</button> <a href='?run'>run</a> <w></w>"
+        if aceEditor then
+            sen = sen .. "<style type='text/css'>#editor{width: 100%; height: 80%}</style><div id='editor'></div><script src='//rawgit.com/ajaxorg/ace-builds/master/src-min-noconflict/ace.js'></script>"
+                .. "<script>var e=ace.edit('editor');e.setTheme('ace/theme/monokai');e.getSession().setMode('ace/mode/lua');function getSource(){return e.getValue();};function setSource(s){e.setValue(s);}</script>"
+        else
+            sen = sen .. "<textarea name=t cols=79 rows=17></textarea></br>"
+                .. "<script>function getSource() {return document.getElementsByName('t')[0].value;};function setSource(s) {document.getElementsByName('t')[0].value = s;};</script>"
+        end
+        sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};var x=new XMLHttpRequest();x.onreadystatechange=function(){if(x.readyState==4) setSource(x.responseText);};x.open('GET',location.pathname);x.send()</script>"
+            .. "<button onclick=\"tag('Saving');x.open('POST',location.pathname);x.onreadystatechange=function(){if(x.readyState==4) tag(x.responseText);};x.send(new Blob([getSource()],{type:'text/plain'}));\">Save</button> <a href='?run'>run</a> <w></w>"
 
     elseif vars == "run" then
         sen = sen .. "<verbatim>"
