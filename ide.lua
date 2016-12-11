@@ -2,12 +2,12 @@
 XChip's NodeMCU IDE
 Original Source: http://www.esp8266.com/viewtopic.php?f=19&t=1549
 
-Petr Stehlik found the source in October 2016, gave it a new home
+Petr Stehlik found the source in October 2016 and gave it a new home
 at https://github.com/joysfera/nodemcu-web-ide under the GPL license.
 Then updated it for new async socket send(), fixed, cleaned up,
-added syntax highlighting and further improvements.
+added external editor with syntax highlighting and further improves it.
 
-Create, Edit and run NodeMCU files using your webbrowser.
+Create, Edit and run NodeMCU files using your web browser.
 Examples:
 http://<mcu_ip>/ will list all the files in the MCU
 http://<mcu_ip>/newfile.lua    displays the file on your browser
@@ -154,17 +154,30 @@ srv:listen(80, function(conn)
 
     end
 
+    local message = {}
+    message[#message + 1] = sen
+    sen = nil
     if url == "" then
         local l = file.list();
         for k,v in pairs(l) do  
-            sen = sen .. "<a href='" ..k.. "?edit'>" ..k.. "</a>, size: " ..v.. " <a href='" ..k.. "?delete'>delete</a><br>"
+            message[#message + 1] = "<a href='" ..k.. "?edit'>" ..k.. "</a>, size: " ..v.. " <a href='" ..k.. "?delete'>delete</a><br>"
         end
-        sen = sen .. "<a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);document.write(\"Please wait\");return false'>Restart</a>"
+        message[#message + 1] = "<a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);document.write(\"Please wait\");return false'>Restart</a>"
     end
+    message[#message + 1] = "</body></html>"
 
-    sck:send(sen .. "</body></html>")
-
+    local function send_table(sk)
+        if #message > 0 then
+            sk:send(table.remove(message, 1))
+        else
+            sk:close()
+            message = nil
+        end
+    end
+    sck:on("sent", send_table)
+    send_table(sck)
   end)
+
   conn:on("sent", function(sck)
     if DataToGet >= 0 and method == "GET" then
         if file.open(url, "r") then
@@ -184,4 +197,5 @@ srv:listen(80, function(conn)
     sck = nil
   end)
 end)
+
 print("listening at " .. wifi.sta.getip() .. ", free: " .. node.heap())
