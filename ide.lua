@@ -118,8 +118,15 @@ srv:listen(80, function(conn)
     
     if vars == "edit" then
         if AceEnabled then
+            local mode = 'ace/mode/'
+            if url:match(".css") then mode = mode .. 'css'
+            elseif url:match(".html") then mode = mode .. 'html'
+            elseif url:match(".json") then mode = mode .. 'json'
+            elseif url:match(".js") then mode = mode .. 'javascript'
+            else mode = mode .. 'lua'
+            end
             sen = sen .. "<style type='text/css'>#editor{width: 100%; height: 80%}</style><div id='editor'></div><script src='//rawgit.com/ajaxorg/ace-builds/master/src-min-noconflict/ace.js'></script>"
-                .. "<script>var e=ace.edit('editor');e.setTheme('ace/theme/monokai');e.getSession().setMode('ace/mode/lua');function getSource(){return e.getValue();};function setSource(s){e.setValue(s);}</script>"
+                .. "<script>var e=ace.edit('editor');e.setTheme('ace/theme/monokai');e.getSession().setMode('"..mode.."');function getSource(){return e.getValue();};function setSource(s){e.setValue(s);}</script>"
         else
             sen = sen .. "<textarea name=t cols=79 rows=17></textarea></br>"
                 .. "<script>function getSource() {return document.getElementsByName('t')[0].value;};function setSource(s) {document.getElementsByName('t')[0].value = s;};</script>"
