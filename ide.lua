@@ -15,10 +15,10 @@ http://<mcu_ip>/newfile.lua?edit  allows to creates or edits the specified scrip
 http://<mcu_ip>/newfile.lua?run   it will run the specified script and will show the returned value
 --]]
 
-local AceEnabled = true -- feel free to enable or disable the shiny Ajax.org Cloud Editor
-
-srv = net.createServer(net.TCP)
-srv:listen(80, function(conn)
+local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Cloud Editor
+ local AceEnabled = aceEnabled == nil and true or aceEnabled
+ srv = net.createServer(net.TCP)
+ srv:listen(80, function(conn)
 
   local rnrn = 0
   local Status = 0
@@ -207,6 +207,17 @@ srv:listen(80, function(conn)
     sck:close()
     sck = nil
   end)
-end)
+ end)
+end
 
-print("listening at " .. wifi.sta.getip() .. ", free: " .. node.heap())
+if wifi.sta.status() == wifi.STA_GOTIP then
+    print("http://"..wifi.sta.getip().."/")
+    editor()
+else
+    print("WiFi connecting...")
+    wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, function()
+        wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
+        print("http://"..wifi.sta.getip().."/")
+        editor()
+    end)
+end
