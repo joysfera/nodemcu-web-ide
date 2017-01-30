@@ -145,7 +145,11 @@ srv:listen(80, function(conn)
         -- delay the output capture by 1000 milliseconds to give some time to the user routine in pcall()
         tmr.alarm(0, 1000, tmr.ALARM_SINGLE, function() 
             node.output(nil)
-            if result then sen = sen .. "<br>Result of the run: " .. tostring(result) .. "<br>" end
+            if result then
+                local outp = tostring(result):sub(1,1300) -- to fit in one send() packet
+                result = nil
+                sen = sen .. "<br>Result of the run: " .. outp .. "<br>"
+            end
             sen = sen .. "</verbatim></body></html>"
             sck:send(sen)
         end)
