@@ -156,12 +156,18 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
 
         return
 
+    elseif vars == "compile" then
+        collectgarbage()
+        node.compile(url)
+        url = ""
+
     elseif vars == "delete" then
         file.remove(url)
         url = ""
 
     elseif vars == "restart" then
         node.restart()
+        url = ""
 
     end
 
@@ -170,8 +176,18 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
     sen = nil
     if url == "" then
         local l = file.list();
-        for k,v in pairs(l) do  
-            message[#message + 1] = "<a href='" ..k.. "?edit'>" ..k.. "</a>, size: " ..v.. " <a href='" ..k.. "?delete'>delete</a><br>"
+        for k,v in pairs(l) do
+            local line = "<a href='" ..k
+            local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json"
+            if editable then
+                line = line .. "?edit"
+            end
+            line = line .. "'>" ..k.. "</a>, size: " ..v
+            if k:sub(-4, -1) == ".lua" then
+                line = line .. " <a href='" ..k.. "?compile'>compile</a>"
+            end
+            line = line .. " <a href='" ..k.. "?delete'>delete</a><br>"
+            message[#message + 1] = line
         end
         message[#message + 1] = "<a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);document.write(\"Please wait\");return false'>Restart</a>"
     end
