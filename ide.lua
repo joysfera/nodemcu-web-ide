@@ -176,20 +176,21 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
     sen = nil
     if url == "" then
         local l = file.list();
+        message[#message + 1] = "<table border=1 cellpadding=3><tr><th>Name</th><th>Size</th><th>Edit</th><th>Compile</th><th>Delete</th></tr>"
         for k,v in pairs(l) do
-            local line = "<a href='" ..k
+            local line = "<tr><td><a href='" ..k.. "'>" ..k.. "</a></td><td>" ..v.. "</td><td>"
             local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json"
             if editable then
-                line = line .. "?edit"
+                line = line .. "<a href='" ..k.. "?edit'>edit</a>"
             end
-            line = line .. "'>" ..k.. "</a>, size: " ..v
+            line = line .. "</td><td>"
             if k:sub(-4, -1) == ".lua" then
-                line = line .. " <a href='" ..k.. "?compile'>compile</a>"
+                line = line .. "<a href='" ..k.. "?compile'>compile</a>"
             end
-            line = line .. " <a href='" ..k.. "?delete'>delete</a><br>"
+            line = line .. "</td><td><a href='" ..k.. "?delete'>delete</a></td></tr>"
             message[#message + 1] = line
         end
-        message[#message + 1] = "<a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);document.write(\"Please wait\");return false'>Restart</a>"
+        message[#message + 1] = "</table><a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);document.write(\"Please wait\");return false'>Restart</a>"
     end
     message[#message + 1] = "</body></html>"
 
