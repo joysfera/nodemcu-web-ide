@@ -167,7 +167,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
 
     elseif vars == "restart" then
         node.restart()
-        url = ""
+        return
 
     end
 
@@ -190,7 +190,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             line = line .. "</td><td><a href='" ..k.. "?delete'>delete</a></td></tr>"
             message[#message + 1] = line
         end
-        message[#message + 1] = "</table><a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);document.write(\"Please wait\");return false'>Restart</a>"
+        message[#message + 1] = "</table><a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);this.innerText=\"Please wait\";return false'>Restart</a>"
     end
     message[#message + 1] = "</body></html>"
 
@@ -210,7 +210,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
     if DataToGet >= 0 and method == "GET" then
         if file.open(url, "r") then
             file.seek("set", DataToGet)
-        local chunkSize = 512
+            local chunkSize = 512
             local line = file.read(chunkSize)
             file.close()
             if line then
