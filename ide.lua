@@ -131,8 +131,9 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             sen = sen .. "<textarea name=t cols=79 rows=17></textarea></br>"
                 .. "<script>function getSource() {return document.getElementsByName('t')[0].value;};function setSource(s) {document.getElementsByName('t')[0].value = s;};</script>"
         end
-        sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};var x=new XMLHttpRequest();x.onreadystatechange=function(){if(x.readyState==4) setSource(x.responseText);};x.open('GET',location.pathname);x.send()</script>"
-            .. "<button onclick=\"tag('Saving');x.open('POST',location.pathname);x.onreadystatechange=function(){if(x.readyState==4) tag(x.responseText);};x.send(new Blob([getSource()],{type:'text/plain'}));\">Save</button> <a href='?run'>run</a> <w></w>"
+        sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};var x=new XMLHttpRequest();x.onreadystatechange=function(){if(x.readyState==4) setSource(x.responseText);};"
+	    .. "x.open('GET',location.pathname);x.send()</script><button onclick=\"tag('Saving, wait!');x.open('POST',location.pathname);x.onreadystatechange=function(){console.log(x.readyState);"
+	    .. "if(x.readyState==4) tag(x.responseText);};x.send(new Blob([getSource()],{type:'text/plain'}));\">Save</button> <a href='?run'>run</a> <w></w>"
 
     elseif vars == "run" then
         sen = sen .. "<verbatim>"
@@ -190,7 +191,8 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             line = line .. "</td><td><a href='" ..k.. "?delete'>delete</a></td></tr>"
             message[#message + 1] = line
         end
-        message[#message + 1] = "</table><a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; <a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);this.innerText=\"Please wait\";return false'>Restart</a>"
+        message[#message + 1] = "</table><a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; "
+	message[#message + 1] = "<a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);this.innerText=\"Please wait\";return false'>Restart</a>"
     end
     message[#message + 1] = "</body></html>"
 
