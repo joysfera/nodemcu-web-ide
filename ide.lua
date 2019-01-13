@@ -6,13 +6,7 @@ Petr Stehlik found the source in October 2016 and gave it a new home
 at https://github.com/joysfera/nodemcu-web-ide under the GPL license.
 Then updated it for new async socket send(), fixed, cleaned up,
 added external editor with syntax highlighting and further improves it.
-
-Create, Edit and run NodeMCU files using your web browser.
-Examples:
-http://<mcu_ip>/ will list all the files in the MCU
-http://<mcu_ip>/newfile.lua    displays the file on your browser
-http://<mcu_ip>/newfile.lua?edit  allows to creates or edits the specified script in your browser
-http://<mcu_ip>/newfile.lua?run   it will run the specified script and will show the returned value
+Dirk van den Brink, Jr. added minor tweaks Jan. 2019
 --]]
 
 local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Cloud Editor
@@ -101,11 +95,11 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
     
     if url == "favicon.ico" then
         -- print("favicon.ico handler sends 404")
-        sck:send("HTTP/1.1 404 file not found")
+        sck:send("HTTP/1.1 404 file not found\r\nServer: NodeMCU IDE\r\nContent-Type: text/html\r\n\r\n<html><head><title>404 - File Not Found</title></head><body>Ya done goofed.</body></html>")
         return
     end    
 
-    local sen = "HTTP/1.1 200 OK\r\n\r\n"
+    local sen = "HTTP/1.1 200 OK\r\nServer: NodeMCU IDE\r\nContent-Type: text/html\r\nPragma: no-cache\r\nCache-Control: no-cache\r\n\r\n"
     
     -- it wants a file in particular
     if url ~= "" and vars == "" then
@@ -114,7 +108,9 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
         return
     end
 
-    sen = sen .. "<html><body><h1><a href='/'>NodeMCU IDE</a></h1>"
+        sen = sen .. "<html><head><title>NodeMCU IDE</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><meta http-equiv=\"Expires\" content=\"-1\" />"
+        sen = sen .. "<style>a:link{color:white;} a:visited{color:white;} a:hover{color:yellow;} a:active{color:green;}</style></head>"
+        sen = sen .. "<body style=\"background-color:#333333;color:#dddddd\"><h1><a href='/'>NodeMCU IDE</a></h1>"
     
     if vars == "edit" then
         if AceEnabled then
@@ -133,10 +129,10 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
         end
         sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};var x=new XMLHttpRequest();x.onreadystatechange=function(){if(x.readyState==4) setSource(x.responseText);};"
 	    .. "x.open('GET',location.pathname);x.send()</script><button onclick=\"tag('Saving, wait!');x.open('POST',location.pathname);x.onreadystatechange=function(){console.log(x.readyState);"
-	    .. "if(x.readyState==4) tag(x.responseText);};x.send(new Blob([getSource()],{type:'text/plain'}));\">Save</button> <a href='?run'>run</a> <w></w>"
+	    .. "if(x.readyState==4) tag(x.responseText);};x.send(new Blob([getSource()],{type:'text/plain'}));\">Save</button> <a href='?run'>[Run File]</a> <a href=\"/\">[Main Page]</a> <w></w>"
 
     elseif vars == "run" then
-        sen = sen .. "<verbatim>"
+        sen = sen .. "Output of the run:<hr><pre>"
 
         function s_output(str) sen = sen .. str end
         node.output(s_output, 0) -- re-direct output to function s_output.
@@ -149,9 +145,9 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             if result then
                 local outp = tostring(result):sub(1,1300) -- to fit in one send() packet
                 result = nil
-                sen = sen .. "<br>Result of the run: " .. outp .. "<br>"
+                sen = sen .. outp
             end
-            sen = sen .. "</verbatim></body></html>"
+            sen = sen .. "</pre><hr><a href=\"?edit\">[Edit File]</a> <a href=\"?run\">[Run Again]</a> <a href=\"/\">[Main Page]</a></body></html>"
             sck:send(sen)
         end)
 
@@ -177,10 +173,10 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
     sen = nil
     if url == "" then
         local l = file.list();
-        message[#message + 1] = "<table border=1 cellpadding=3><tr><th>Name</th><th>Size</th><th>Edit</th><th>Compile</th><th>Delete</th></tr>"
+        message[#message + 1] = "<table border=1 cellpadding=3><tr><th>Name</th><th>Size</th><th>Edit</th><th>Compile</th><th>Delete</th><th>Run</th></tr>\n"
         for k,v in pairs(l) do
             local line = "<tr><td><a href='" ..k.. "'>" ..k.. "</a></td><td>" ..v.. "</td><td>"
-            local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json"
+            local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json" or k:sub(-4, -1) == ".txt" or k:sub(-4, -1) == ".csv"
             if editable then
                 line = line .. "<a href='" ..k.. "?edit'>edit</a>"
             end
@@ -188,11 +184,16 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             if k:sub(-4, -1) == ".lua" then
                 line = line .. "<a href='" ..k.. "?compile'>compile</a>"
             end
-            line = line .. "</td><td><a href='" ..k.. "?delete'>delete</a></td></tr>"
+            line = line .. "</td><td><a href='#' onclick='v=prompt(\"Type YES to confirm file deletion!\");if (v==\"YES\") { this.href=\"/"..k.."?delete\"; return true;} else return false;'>delete</a></td><td>"
+            if ((k:sub(-4, -1) == ".lua") or (k:sub(-3, -1) == ".lc")) then
+                line = line .. "<a href='" ..k.. "?run'>run</a></td></tr>\n"
+            end
             message[#message + 1] = line
         end
-        message[#message + 1] = "</table><a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>Create new</a> &nbsp; &nbsp; "
-	message[#message + 1] = "<a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);this.innerText=\"Please wait\";return false'>Restart</a>"
+        remaining, used, total=file.fsinfo()
+        message[#message + 1] = "</table>Total: "..total.." Bytes | Used: "..used.." Bytes | Remaining: "..remaining.." Bytes <br><br><a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>[New File]</a>&nbsp;"
+        remaining, used, total=nil
+    	message[#message + 1] = "<a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);this.innerText=\"[Please wait...]\";return false'>[Restart]</a>"
     end
     message[#message + 1] = "</body></html>"
 
@@ -205,8 +206,8 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
         end
     end
     sck:on("sent", send_table)
-    send_table(sck)
-  end)
+        send_table(sck)
+    end)
 
   conn:on("sent", function(sck)
     if DataToGet >= 0 and method == "GET" then
@@ -236,7 +237,7 @@ else
     print("WiFi connecting...")
     wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, function()
         wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
-        print("http://"..wifi.sta.getip().."/")
+        print("NodeMCU Web IDE running at http://"..wifi.sta.getip().."/")
         editor()
     end)
 end
