@@ -9,6 +9,20 @@ added external editor with syntax highlighting and further improves it.
 Dirk van den Brink, Jr. added minor tweaks Jan. 2019
 --]]
 
+local function pairsByKeys (t, f)
+  local a = {}
+  for n in pairs(t) do table.insert(a, n) end
+  table.sort(a, f)
+  local i = 0      -- iterator variable
+  local iter = function ()   -- iterator function
+	i = i + 1
+	if a[i] == nil then return nil
+	else return a[i], t[a[i]]
+	end
+  end
+  return iter
+end
+
 local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Cloud Editor
  local AceEnabled = aceEnabled == nil and true or aceEnabled
  srv = net.createServer(net.TCP)
@@ -128,20 +142,22 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
                 .. "<script>function getSource() {return document.getElementsByName('t')[0].value;};function setSource(s) {document.getElementsByName('t')[0].value = s;};</script>"
         end
         sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};var x=new XMLHttpRequest();x.onreadystatechange=function(){if(x.readyState==4) setSource(x.responseText);};"
-	    .. "x.open('GET',location.pathname);x.send()</script><button onclick=\"tag('Saving, wait!');x.open('POST',location.pathname);x.onreadystatechange=function(){console.log(x.readyState);"
-	    .. "if(x.readyState==4) tag(x.responseText);};x.send(new Blob([getSource()],{type:'text/plain'}));\">Save</button> <a href='?run'>[Run File]</a> <a href=\"/\">[Main Page]</a> <w></w>"
+        .. "x.open('GET',location.pathname);x.send()</script><button onclick=\"tag('Saving, wait!');x.open('POST',location.pathname);x.onreadystatechange=function(){console.log(x.readyState);"
+        .. "if(x.readyState==4) tag(x.responseText);};x.send(new Blob([getSource()],{type:'text/plain'}));\">Save</button> <a href='?run'>[Run File]</a> <a href=\"/\">[Main Page]</a> <w></w>"
 
     elseif vars == "run" then
         sen = sen .. "Output of the run:<hr><pre>"
-
-        function s_output(str) sen = sen .. str end
-        node.output(s_output, 0) -- re-direct output to function s_output.
-
-        local st, result = pcall(dofile, url)
-
-        -- delay the output capture by 1000 milliseconds to give some time to the user routine in pcall()
-        tmr.alarm(0, 1000, tmr.ALARM_SINGLE, function() 
-            node.output(nil)
+		local function output_CB(opipe)   -- upval: sck
+	       for line in opipe:reader() do
+			 sen = sen .. line .. "\n"
+	       end
+		end
+		node.output(output_CB, 0) 
+		ok, result = pcall(dofile, url)
+	
+       --delay the output capture by 1000 milliseconds to give some time to the user routine in pcall()
+        tmr.create():alarm(1500, tmr.ALARM_SINGLE, function() 
+            node.output()
             if result then
                 local outp = tostring(result):sub(1,1300) -- to fit in one send() packet
                 result = nil
@@ -150,8 +166,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             sen = sen .. "</pre><hr><a href=\"?edit\">[Edit File]</a> <a href=\"?run\">[Run Again]</a> <a href=\"/\">[Main Page]</a></body></html>"
             sck:send(sen)
         end)
-
-        return
+		return
 
     elseif vars == "compile" then
         collectgarbage()
@@ -174,7 +189,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
     if url == "" then
         local l = file.list();
         message[#message + 1] = "<table border=1 cellpadding=3><tr><th>Name</th><th>Size</th><th>Edit</th><th>Compile</th><th>Delete</th><th>Run</th></tr>\n"
-        for k,v in pairs(l) do
+        for k,v in pairsByKeys(l) do
             local line = "<tr><td><a href='" ..k.. "'>" ..k.. "</a></td><td>" ..v.. "</td><td>"
             local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json" or k:sub(-4, -1) == ".txt" or k:sub(-4, -1) == ".csv"
             if editable then
@@ -191,9 +206,10 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             message[#message + 1] = line
         end
         remaining, used, total=file.fsinfo()
-        message[#message + 1] = "</table>Total: "..total.." Bytes | Used: "..used.." Bytes | Remaining: "..remaining.." Bytes <br><br><a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>[New File]</a>&nbsp;"
+        message[#message + 1] = "</table>Total: "..total.." Bytes | Used: "..used.." Bytes | Remaining: "..remaining.." Bytes<br><br>"
         remaining, used, total=nil
-    	message[#message + 1] = "<a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);this.innerText=\"[Please wait...]\";return false'>[Restart]</a>"
+        message[#message + 1] = "<a href='#' onclick='v=prompt(\"Filename\");if (v!=null) { this.href=\"/\"+v+\"?edit\"; return true;} else return false;'>[New File]</a>&nbsp;"  
+        message[#message + 1] = "<a href='#' onclick='var x=new XMLHttpRequest();x.open(\"GET\",\"/?restart\");x.send();setTimeout(function(){location.href=\"/\"},5000);this.innerText=\"[Please wait...]\";return false'>[Restart]</a>"
     end
     message[#message + 1] = "</body></html>"
 
