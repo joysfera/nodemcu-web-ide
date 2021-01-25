@@ -155,7 +155,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
 		node.output(output_CB, 0) 
 		ok, result = pcall(dofile, url)
 	
-       --delay the output capture by 1000 milliseconds to give some time to the user routine in pcall()
+       --delay the output capture by 1500 milliseconds to give some time to the user routine in pcall()
         tmr.create():alarm(1500, tmr.ALARM_SINGLE, function() 
             node.output()
             if result then
