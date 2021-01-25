@@ -155,7 +155,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
         ok, result = pcall(dofile, url)
 	
        --delay the output capture by 1000 milliseconds to give some time to the user routine in pcall()
-        tmr.create():alarm(1500, tmr.ALARM_SINGLE, function() 
+        tmr.create():alarm(1000, tmr.ALARM_SINGLE, function() 
             node.output()
             if result then
                 local outp = tostring(result):sub(1,1300) -- to fit in one send() packet
