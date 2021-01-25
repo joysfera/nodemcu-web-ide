@@ -125,8 +125,6 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
         sen = sen .. "<html><head><title>NodeMCU IDE</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><meta http-equiv=\"Expires\" content=\"-1\" />"
         sen = sen .. "<style>a:link{color:white;} a:visited{color:white;} a:hover{color:yellow;} a:active{color:green;}</style></head>"
         sen = sen .. "<body style=\"background-color:#333333;color:#dddddd\"><h1><a href='/'>NodeMCU IDE</a></h1>"
-        --sen = sen .. "<script src=\"https://dohliam.github.io/dropin-minimal-css/switcher.js\" type=\"text/javascript\"></script>"
-
     
     if vars == "edit" then
         if AceEnabled then
@@ -135,7 +133,6 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             elseif url:match(".html") then mode = mode .. 'html'
             elseif url:match(".json") then mode = mode .. 'json'
             elseif url:match(".js") then mode = mode .. 'javascript'
-            elseif url:match(".md") then mode = mode .. 'markdown'
             else mode = mode .. 'lua'
             end
             sen = sen .. "<style type='text/css'>#editor{width: 100%; height: 80%}</style><div id='editor'></div><script src='//rawgit.com/ajaxorg/ace-builds/master/src-min-noconflict/ace.js'></script>"
@@ -194,7 +191,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
         message[#message + 1] = "<table border=1 cellpadding=3><tr><th>Name</th><th>Size</th><th>Edit</th><th>Compile</th><th>Delete</th><th>Run</th></tr>\n"
         for k,v in pairsByKeys(l) do
             local line = "<tr><td><a href='" ..k.. "'>" ..k.. "</a></td><td>" ..v.. "</td><td>"
-            local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json" or k:sub(-4, -1) == ".txt" or k:sub(-4, -1) == ".csv" or k:sub(-3, -1) == ".md"
+            local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json" or k:sub(-4, -1) == ".txt" or k:sub(-4, -1) == ".csv"
             if editable then
                 line = line .. "<a href='" ..k.. "?edit'>edit</a>"
             end
