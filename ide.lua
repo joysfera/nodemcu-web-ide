@@ -121,11 +121,9 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
         sck:send(sen)
         return
     end
-
         sen = sen .. "<html><head><title>NodeMCU IDE</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><meta http-equiv=\"Expires\" content=\"-1\" />"
         sen = sen .. "<style>a:link{color:white;} a:visited{color:white;} a:hover{color:yellow;} a:active{color:green;}</style></head>"
         sen = sen .. "<body style=\"background-color:#333333;color:#dddddd\"><h1><a href='/'>NodeMCU IDE</a></h1>"
-    
     if vars == "edit" then
         if AceEnabled then
             local mode = 'ace/mode/'
@@ -133,13 +131,14 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
             elseif url:match(".html") then mode = mode .. 'html'
             elseif url:match(".json") then mode = mode .. 'json'
             elseif url:match(".js") then mode = mode .. 'javascript'
+            elseif url:match(".md") then mode = mode .. 'markdown'
             else mode = mode .. 'lua'
             end
             sen = sen .. "<style type='text/css'>#editor{width: 100%; height: 80%}</style><div id='editor'></div><script src='//rawgit.com/ajaxorg/ace-builds/master/src-min-noconflict/ace.js'></script>"
-                .. "<script>var e=ace.edit('editor');e.setTheme('ace/theme/monokai');e.getSession().setMode('"..mode.."');function getSource(){return e.getValue();};function setSource(s){e.setValue(s);}</script>"
+                 .. "<script>var e=ace.edit('editor');e.setTheme('ace/theme/monokai');e.getSession().setMode('"..mode.."');function getSource(){return e.getValue();};function setSource(s){e.setValue(s);}</script>"
         else
             sen = sen .. "<textarea name=t cols=79 rows=17></textarea></br>"
-                .. "<script>function getSource() {return document.getElementsByName('t')[0].value;};function setSource(s) {document.getElementsByName('t')[0].value = s;};</script>"
+                 .. "<script>function getSource() {return document.getElementsByName('t')[0].value;};function setSource(s) {document.getElementsByName('t')[0].value = s;};</script>"
         end
         sen = sen .. "<script>function tag(c){document.getElementsByTagName('w')[0].innerHTML=c};var x=new XMLHttpRequest();x.onreadystatechange=function(){if(x.readyState==4) setSource(x.responseText);};"
         .. "x.open('GET',location.pathname);x.send()</script><button onclick=\"tag('Saving, wait!');x.open('POST',location.pathname);x.onreadystatechange=function(){console.log(x.readyState);"
@@ -147,15 +146,15 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
 
     elseif vars == "run" then
         sen = sen .. "Output of the run:<hr><pre>"
-		local function output_CB(opipe)   -- upval: sck
-	       for line in opipe:reader() do
-			 sen = sen .. line .. "\n"
-	       end
-		end
-		node.output(output_CB, 0) 
-		ok, result = pcall(dofile, url)
+        local function output_CB(opipe)   -- upval: sck
+           for line in opipe:reader() do
+             sen = sen .. line .. "\n"
+           end
+        end
+        node.output(output_CB, 0) 
+        ok, result = pcall(dofile, url)
 	
-       --delay the output capture by 1500 milliseconds to give some time to the user routine in pcall()
+       --delay the output capture by 1000 milliseconds to give some time to the user routine in pcall()
         tmr.create():alarm(1500, tmr.ALARM_SINGLE, function() 
             node.output()
             if result then
@@ -191,7 +190,7 @@ local function editor(aceEnabled) -- feel free to disable the shiny Ajax.org Clo
         message[#message + 1] = "<table border=1 cellpadding=3><tr><th>Name</th><th>Size</th><th>Edit</th><th>Compile</th><th>Delete</th><th>Run</th></tr>\n"
         for k,v in pairsByKeys(l) do
             local line = "<tr><td><a href='" ..k.. "'>" ..k.. "</a></td><td>" ..v.. "</td><td>"
-            local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json" or k:sub(-4, -1) == ".txt" or k:sub(-4, -1) == ".csv"
+            local editable = k:sub(-4, -1) == ".lua" or k:sub(-4, -1) == ".css" or k:sub(-5, -1) == ".html" or k:sub(-5, -1) == ".json" or k:sub(-4, -1) == ".txt" or k:sub(-4, -1) == ".csv" or k:sub(-3, -1) == ".md"
             if editable then
                 line = line .. "<a href='" ..k.. "?edit'>edit</a>"
             end
@@ -257,3 +256,4 @@ else
         editor()
     end)
 end
+
