@@ -1,5 +1,6 @@
 # nodemcu-web-ide
-Simple Web IDE running on NodeMCU Lua
+Simple Web IDE running on NodeMCU Lua.
+This sketch is compatiable with NodeMCU 3.0.
 
 Originaly written by XChip in February 2015 and published in
 http://www.esp8266.com/viewtopic.php?f=19&t=1549
